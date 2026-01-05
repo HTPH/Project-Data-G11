@@ -128,7 +128,7 @@ void printStack(Stack *stack)
 
 int isOperator(char ch)
 {
-    return (ch == '+' || ch == '-' || ch == '*' || ch == '/');
+    return (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^');
 }
 
 int cal(int operand1, int operand2, char operator)
@@ -143,6 +143,8 @@ int cal(int operand1, int operand2, char operator)
         return operand1 * operand2;
     case '/':
         return operand1 / operand2;
+    case '^':
+        return (int)pow(operand1, operand2);
     default:
         return 0;
     }

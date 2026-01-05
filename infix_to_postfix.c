@@ -5,7 +5,7 @@
 
 typedef struct Node
 {
-    char data[200];
+    char data;
     struct Node *next;
 } Node;
 
@@ -26,121 +26,123 @@ int isEmpty(Stack *s)
     return s->top == NULL;
 }
 
-void push(Stack *s, const char *str)
+void push(Stack *s, char c)
 {
     Node *newNode = (Node *)malloc(sizeof(Node));
-    strcpy(newNode->data, str);
+    newNode->data = c;
     newNode->next = s->top;
     s->top = newNode;
 }
 
-char *pop(Stack *s)
+char pop(Stack *s)
 {
     if (isEmpty(s))
-        return NULL;
-
+        return '\0';
     Node *temp = s->top;
-    char *value = strdup(temp->data);
+    char c = temp->data;
     s->top = temp->next;
     free(temp);
-    return value;
+    return c;
 }
 
-void printStack(Stack *s)
+char peek(Stack *s)
 {
     if (isEmpty(s))
-    {
-        printf("-");
-        return;
-    }
-
-    char arr[50][200];
-    int count = 0;
-    Node *temp = s->top;
-
-    while (temp)
-    {
-        strcpy(arr[count++], temp->data);
-        temp = temp->next;
-    }
-
-    for (int i = count - 1; i >= 0; i--)
-    {
-        printf("%s", arr[i]);
-    }
+        return '\0';
+    return s->top->data;
 }
 
 int isOperator(char c)
 {
-    return (c == '+' || c == '-' || c == '*' || c == '/');
+    return (c == '+' || c == '-' || c == '*' || c == '/' || c == '^');
 }
 
-void InfixConvert(char *postfix)
+int priority(char c)
+{
+    if (c == '^')
+        return 3;
+    if (c == '*' || c == '/')
+        return 2;
+    if (c == '+' || c == '-')
+        return 1;
+    return 0;
+}
+
+void infixConvert(char infix[], char postfix[])
 {
     Stack *stack = createStack();
-    int step = 1;
+    int i = 0, j = 0, step = 1;
 
-    printf("\n%-6s %-8s %-25s\n", "Step", "Symbol", "Stack");
-    printf("-------------------------------------------------\n");
+    char display[200] = "";
 
-    for (int i = 0; postfix[i] != '\0'; i++)
+    printf("\n%-6s %-8s %-20s\n", "Step", "Symbol", "Stack");
+    printf("----------------------------------------\n");
+
+    while (infix[i] != '\0')
     {
-        char c = postfix[i];
+        char c = infix[i];
 
         if (c == ' ')
         {
-
+            i++;
             continue;
         }
 
         if (isalnum(c))
         {
-            char s[2] = {c, '\0'};
-            push(stack, s);
-
-            printf("%-6d %-8c ", step++, c);
-            printStack(stack);
-            printf("\n");
+            postfix[j++] = c;
+        }
+        else if (c == '(')
+        {
+            push(stack, c);
+        }
+        else if (c == ')')
+        {
+            while (!isEmpty(stack) && peek(stack) != '(')
+            {
+                postfix[j++] = pop(stack);
+            }
+            pop(stack);
         }
         else if (isOperator(c))
         {
-            char *right = pop(stack);
-            char *left = pop(stack);
-
-            char expr[200];
-            sprintf(expr, "(%s%c%s)", left, c, right);
-            push(stack, expr);
-
-            printf("%-6d %-8c ", step++, c);
-            printStack(stack);
-            printf("\n");
-
-            free(left);
-            free(right);
+            while (!isEmpty(stack) &&
+                   priority(peek(stack)) >= priority(c))
+            {
+                postfix[j++] = pop(stack);
+            }
+            push(stack, c);
         }
+
+        int len = strlen(display);
+        display[len] = c;
+        display[len + 1] = '\0';
+
+        printf("%-6d %-8c %-20s\n", step++, c, display);
+
+        i++;
     }
 
-    printf("-------------------------------------------------\n");
-
-    char *result = pop(stack);
-    if (result != NULL)
+    while (!isEmpty(stack))
     {
-        printf("\nPostfix: %s\n", result);
-        free(result);
+        postfix[j++] = pop(stack);
+
+        printf("%-6d %-8s %-20s\n", step++, " ", display);
     }
+
+    postfix[j] = '\0';
+    printf("----------------------------------------\n");
 
     free(stack);
 }
 
 int main()
 {
-    char postfix[200];
-
-    printf("Postfix: ");
-    fgets(postfix, sizeof(postfix), stdin);
-    postfix[strcspn(postfix, "\n")] = '\0';
-
-    InfixConvert(postfix);
-
+    char infix[100], postfix[100];
+    printf("Infix: ");
+    fgets(infix, sizeof(infix), stdin);
+    infix[strcspn(infix, "\n")] = '\0';
+    infixConvert(infix, postfix);
+    printf("\nPostfix: %s\n", postfix);
     return 0;
 }
