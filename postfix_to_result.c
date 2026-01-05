@@ -231,7 +231,7 @@ int main()
 
     postfix[strcspn(postfix, "\n")] = '\0';
 
-    int result = Postfixconvert(postfix);
+    int result = PostfixConvert(postfix);
 
     printf("Result: %d\n", result);
 
