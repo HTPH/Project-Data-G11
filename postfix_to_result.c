@@ -145,7 +145,7 @@ int cal(int operand1, int operand2, char operator)
     case '/':
         return operand1 / operand2;
     case '^':
-        return  pow(operand1, operand2);
+        return pow(operand1, operand2);
     default:
         return 0;
     }
