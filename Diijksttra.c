@@ -3,57 +3,60 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define MAX_Vertices 20
+#define MAX_VERTICES 20
+#define NO_EDGE 0
+#define INFINITY_DIST INT_MAX
 
 typedef struct
 {
-    int V;
-    int adjMatrix[MAX_Vertices][MAX_Vertices];
+    int vertexCount;
+    int adjMatrix[MAX_VERTICES][MAX_VERTICES];
 } Graph;
-
-Graph *createGraph(int V)
+Graph *createGraph(int vertexCount)
 {
     Graph *graph = (Graph *)malloc(sizeof(Graph));
-    graph->V = V;
+    graph->vertexCount = vertexCount;
 
-    for (int i = 0; i < V; i++)
+    for (int i = 0; i < vertexCount; i++)
     {
-        for (int j = 0; j < V; j++)
+        for (int j = 0; j < vertexCount; j++)
         {
-            graph->adjMatrix[i][j] = 0;
+            graph->adjMatrix[i][j] = NO_EDGE;
         }
     }
 
     return graph;
 }
 
-void addEdge(Graph *graph, int src, int dest, int weight)
+void addEdge(Graph *graph, int source, int destination, int weight)
 {
-    graph->adjMatrix[src][dest] = weight;
-    graph->adjMatrix[dest][src] = weight;
+    graph->adjMatrix[source][destination] = weight;
+    graph->adjMatrix[destination][source] = weight;
 }
 
 void printGraph(Graph *graph)
 {
     printf("\nAdjacency Matrix:\n");
+
     printf("     ");
-    for (int i = 0; i < graph->V; i++)
+    for (int i = 0; i < graph->vertexCount; i++)
     {
         printf("%4d", i);
     }
     printf("\n    ");
-    for (int i = 0; i < graph->V; i++)
+
+    for (int i = 0; i < graph->vertexCount; i++)
     {
         printf("----");
     }
     printf("\n");
 
-    for (int i = 0; i < graph->V; i++)
+    for (int i = 0; i < graph->vertexCount; i++)
     {
         printf("%2d | ", i);
-        for (int j = 0; j < graph->V; j++)
+        for (int j = 0; j < graph->vertexCount; j++)
         {
-            if (graph->adjMatrix[i][j] == 0)
+            if (graph->adjMatrix[i][j] == NO_EDGE)
             {
                 printf("   -");
             }
@@ -66,25 +69,25 @@ void printGraph(Graph *graph)
     }
 }
 
-int minDistance(int dist[], bool visited[], int V)
+int findMinDistanceVertex(int distance[], bool visited[], int vertexCount)
 {
-    int min = INT_MAX;
-    int min_index = -1;
+    int minDistance = INFINITY_DIST;
+    int minVertex = -1;
 
-    for (int v = 0; v < V; v++)
+    for (int v = 0; v < vertexCount; v++)
     {
-        if (!visited[v] && dist[v] <= min)
+        if (!visited[v] && distance[v] <= minDistance)
         {
-            min = dist[v];
-            min_index = v;
+            minDistance = distance[v];
+            minVertex = v;
         }
     }
-
-    return min_index;
+    return minVertex;
 }
 
 void printPath(int parent[], int vertex)
 {
+
     if (parent[vertex] == -1)
     {
         printf("%d", vertex);
@@ -95,86 +98,96 @@ void printPath(int parent[], int vertex)
     printf(" -> %d", vertex);
 }
 
-void showResult(int dist[], int parent[], int V, int src)
+void showShortestPaths(int distance[], int parent[], int vertexCount, int source)
 {
+
     printf("=========================================\n");
     printf("Destination\tDistance\tPath\n");
     printf("-----------------------------------------\n");
 
-    for (int i = 0; i < V; i++)
+    for (int i = 0; i < vertexCount; i++)
     {
-        if (i != src)
+        if (i != source)
         {
-            printf("%d\t\t\t", i);
+            printf("%d\t\t", i);
 
-            if (dist[i] != INT_MAX)
+            if (distance[i] != INFINITY_DIST)
             {
-                printf("%d\t\t\t", dist[i]);
+                printf("%d\t\t", distance[i]);
                 printPath(parent, i);
                 printf("\n");
             }
+            else
+            {
+                printf("No path\n");
+            }
         }
     }
+    printf("=========================================\n");
 }
 
-void dijkstra(Graph *graph, int src)
+void dijkstra(Graph *graph, int source)
 {
-    int V = graph->V;
-    int dist[MAX_Vertices];
-    bool visited[MAX_Vertices];
-    int parent[MAX_Vertices];
-
-    for (int i = 0; i < V; i++)
+    int vertexCount = graph->vertexCount;
+    int distance[MAX_VERTICES];
+    bool visited[MAX_VERTICES];
+    int parent[MAX_VERTICES];
+    for (int i = 0; i < vertexCount; i++)
     {
-        dist[i] = INT_MAX;
+        distance[i] = INFINITY_DIST;
         visited[i] = false;
         parent[i] = -1;
     }
 
-    dist[src] = 0;
-    printf("\n");
-    printf("\n\nShortest Path from vertex %d:\n", src);
+    distance[source] = 0;
 
-    for (int count = 0; count < V - 1; count++)
+    printf("\n\nShortest Path from vertex %d:\n", source);
+    printf("-----------------------------------------\n");
+
+    for (int count = 0; count < vertexCount - 1; count++)
     {
-        int u = minDistance(dist, visited, V);
+        int currentVertex = findMinDistanceVertex(distance, visited, vertexCount);
 
-        if (u == -1)
-            break;
-
-        visited[u] = true;
-
-        printf("Step %d: Visit vertex %d (distance = %d)\n", count + 1, u, dist[u]);
-
-        for (int v = 0; v < V; v++)
+        if (currentVertex == -1)
         {
+            break;
+        }
+        visited[currentVertex] = true;
 
-            if (!visited[v] &&
-                graph->adjMatrix[u][v] != 0 &&
-                dist[u] != INT_MAX &&
-                dist[u] + graph->adjMatrix[u][v] < dist[v])
+        printf("Step %d: Visit vertex %d (distance = %d)\n",
+               count + 1, currentVertex, distance[currentVertex]);
+
+        for (int neighbor = 0; neighbor < vertexCount; neighbor++)
+        {
+            int edgeWeight = graph->adjMatrix[currentVertex][neighbor];
+
+            bool hasEdge = (edgeWeight != NO_EDGE);
+            bool isReachable = (distance[currentVertex] != INFINITY_DIST);
+            bool isShorterPath = (distance[currentVertex] + edgeWeight < distance[neighbor]);
+
+            if (!visited[neighbor] && hasEdge && isReachable && isShorterPath)
             {
+                distance[neighbor] = distance[currentVertex] + edgeWeight;
+                parent[neighbor] = currentVertex;
 
-                dist[v] = dist[u] + graph->adjMatrix[u][v];
-                parent[v] = u;
-
-                printf("   Update: vertex %d, new distance = %d\n", v, dist[v]);
+                printf("   Update: vertex %d, new distance = %d\n",
+                       neighbor, distance[neighbor]);
             }
         }
     }
 
-    showResult(dist, parent, V, src);
+    showShortestPaths(distance, parent, vertexCount, source);
 }
 
 int main()
 {
-    int V = 9;
-    Graph *graph = createGraph(V);
-
     printf("========================================\n");
     printf("  Dijkstra's Algorithm\n");
     printf("  Using Adjacency Matrix\n");
     printf("========================================\n");
+
+    int vertexCount = 9;
+    Graph *graph = createGraph(vertexCount);
 
     addEdge(graph, 0, 1, 4);
     addEdge(graph, 0, 7, 8);
@@ -193,7 +206,7 @@ int main()
 
     printGraph(graph);
 
-    printf("========================================");
+    printf("\n========================================");
 
     dijkstra(graph, 0);
 
@@ -202,5 +215,6 @@ int main()
     dijkstra(graph, 4);
 
     free(graph);
+
     return 0;
 }
